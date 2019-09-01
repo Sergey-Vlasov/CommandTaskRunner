@@ -64,7 +64,7 @@ namespace CommandTaskRunner
             SolutionBuild build = sln.SolutionBuild;
             var slnCfg = (SolutionConfiguration2)build.ActiveConfiguration;
 
-            Project proj = projs.Cast<Project>().FirstOrDefault(x => x.FileName.Contains(cmdsDir));
+            Project proj = GetProject(cmdsDir);
 
             ApplyVariable("$(ConfigurationName)", slnCfg.Name, ref str);
             ApplyVariable("$(DevEnvDir)", Path.GetDirectoryName(dte.FileName), ref str);
@@ -125,6 +125,8 @@ namespace CommandTaskRunner
             tasks.Description = "A list of command to execute";
             root.Children.Add(tasks);
 
+            Project proj = GetProject(rootDir);
+
             foreach (CommandTask command in commands.OrderBy(k => k.Name))
             {
                 command.Name = SetVariables(command.Name, rootDir);
@@ -135,10 +137,9 @@ namespace CommandTaskRunner
                 // Add zero width space
                 string commandName = command.Name;
 
-                var task = new TaskRunnerNode(commandName, true) {
-                    Command = new DynamicTaskRunnerCommand(this, rootDir, cwd, command.FileName, command.Arguments),
-                    Description = $"Filename:\t {command.FileName}\r\nArguments:\t {command.Arguments}"
-                };
+                TaskRunnerNode task = proj != null && command.Name.Contains("reload project") ? new TaskRunnerNodeContinuation(commandName, (result) => ProjectReload.InfoBar.ShowAsync(_serviceProvider, proj)) : new TaskRunnerNode(commandName, true);
+                task.Command = new DynamicTaskRunnerCommand(this, rootDir, cwd, command.FileName, command.Arguments);
+                task.Description = $"Filename:\t {command.FileName}\r\nArguments:\t {command.Arguments}";
 
                 tasks.Children.Add(task);
             }
@@ -169,6 +170,14 @@ namespace CommandTaskRunner
             }
 
             return list;
+        }
+
+        private Project GetProject(string cmdsDir)
+        {
+            var dte = (DTE)_serviceProvider.GetService(typeof(DTE));
+            Solution sln = dte.Solution;
+            IList<Project> projs = GetProjects(dte);
+            return projs.Cast<Project>().FirstOrDefault(x => x.FileName.Contains(cmdsDir));
         }
 
         private IEnumerable<Project> GetSolutionFolderProjects(Project solutionFolder)
