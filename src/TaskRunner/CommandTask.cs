@@ -12,5 +12,6 @@ namespace CommandTaskRunner
         public string FileName { get; set; }
         public string Arguments { get; set; }
         public string WorkingDirectory { get; set; }
+        public bool ReloadProject { get; set; }
     }
 }

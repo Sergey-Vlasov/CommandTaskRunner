@@ -137,7 +137,7 @@ namespace CommandTaskRunner
                 // Add zero width space
                 string commandName = command.Name;
 
-                TaskRunnerNode task = proj != null && command.Name.Contains("reload project") ? new TaskRunnerNodeContinuation(commandName, (result) => ProjectReload.InfoBar.ShowAsync(_serviceProvider, proj)) : new TaskRunnerNode(commandName, true);
+                TaskRunnerNode task = proj != null && command.ReloadProject ? new TaskRunnerNodeContinuation(commandName, (result) => ProjectReload.InfoBar.ShowAsync(_serviceProvider, proj)) : new TaskRunnerNode(commandName, true);
                 task.Command = new DynamicTaskRunnerCommand(this, rootDir, cwd, command.FileName, command.Arguments);
                 task.Description = $"Filename:\t {command.FileName}\r\nArguments:\t {command.Arguments}";
 
